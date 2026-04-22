@@ -1,0 +1,62 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateOperationDto } from './dto/create-operation.dto';
+import { OperationFiltersDto } from './dto/operation-filters.dto';
+import { UpdateOperationDto } from './dto/update-operation.dto';
+export declare class OperationsService {
+    private readonly prisma;
+    constructor(prisma: PrismaService);
+    private resolveAssetName;
+    private computeTotalAmount;
+    private getCurrentPosition;
+    private ensureSellHasQuantity;
+    private toResponse;
+    findAll(tenantId: string, userId: string, filters: OperationFiltersDto): Promise<{
+        id: string;
+        symbol: string;
+        assetName: string;
+        assetType: string;
+        operationType: string;
+        quantity: number;
+        unitPrice: number;
+        totalAmount: number;
+        fees: number;
+        operationDate: string;
+        broker: string | null;
+        notes: string | null;
+        createdAt: string;
+        updatedAt: string;
+    }[]>;
+    create(tenantId: string, userId: string, payload: CreateOperationDto): Promise<{
+        id: string;
+        symbol: string;
+        assetName: string;
+        assetType: string;
+        operationType: string;
+        quantity: number;
+        unitPrice: number;
+        totalAmount: number;
+        fees: number;
+        operationDate: string;
+        broker: string | null;
+        notes: string | null;
+        createdAt: string;
+        updatedAt: string;
+    }>;
+    update(tenantId: string, userId: string, id: string, payload: UpdateOperationDto): Promise<{
+        id: string;
+        symbol: string;
+        assetName: string;
+        assetType: string;
+        operationType: string;
+        quantity: number;
+        unitPrice: number;
+        totalAmount: number;
+        fees: number;
+        operationDate: string;
+        broker: string | null;
+        notes: string | null;
+        createdAt: string;
+        updatedAt: string;
+    }>;
+    remove(tenantId: string, userId: string, id: string): Promise<void>;
+}

@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @db.VarChar(50)
+  name      String   @db.VarChar(255)
+  isActive  Boolean  @default(true) @map("is_active")
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  users        User[]
+  transactions Transaction[]
+  operations   Operation[]
+  userSettings UserSettings[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.VarChar(50)
+  name         String   @db.VarChar(255)
+  email        String   @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @default("viewer") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id])
+  transactions Transaction[]
+  operations   Operation[]
+  settings     UserSettings?
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Transaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.VarChar(50)
+  userId      String   @map("user_id") @db.Uuid
+  title       String   @db.VarChar(255)
+  type        String   @db.VarChar(10)
+  amount      Decimal  @db.Decimal(15, 2)
+  category    String   @db.VarChar(100)
+  date        DateTime @db.Timestamptz
+  status      String   @default("completed") @db.VarChar(20)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId], name: "idx_transactions_tenant")
+  @@index([tenantId, userId], name: "idx_transactions_user")
+  @@index([tenantId, date(sort: Desc)], name: "idx_transactions_date")
+  @@index([tenantId, type], name: "idx_transactions_type")
+  @@map("transactions")
+}
+
+model Operation {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.VarChar(50)
+  userId        String   @map("user_id") @db.Uuid
+  symbol        String   @db.VarChar(20)
+  assetName     String   @map("asset_name") @db.VarChar(255)
+  assetType     String   @map("asset_type") @db.VarChar(20)
+  operationType String   @map("operation_type") @db.VarChar(10)
+  quantity      Decimal  @db.Decimal(15, 6)
+  unitPrice     Decimal  @map("unit_price") @db.Decimal(15, 4)
+  totalAmount   Decimal  @map("total_amount") @db.Decimal(15, 2)
+  fees          Decimal  @default(0) @db.Decimal(15, 2)
+  operationDate DateTime @map("operation_date") @db.Timestamptz
+  broker        String?  @db.VarChar(255)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId], name: "idx_operations_tenant")
+  @@index([tenantId, userId], name: "idx_operations_user")
+  @@index([tenantId, symbol], name: "idx_operations_symbol")
+  @@index([tenantId, operationDate(sort: Desc)], name: "idx_operations_date")
+  @@map("operations")
+}
+
+model UserSettings {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.VarChar(50)
+  userId      String   @unique @map("user_id") @db.Uuid
+  profile     Json     @default("{}")
+  preferences Json     @default("{}")
+  platform    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@map("user_settings")
+}
